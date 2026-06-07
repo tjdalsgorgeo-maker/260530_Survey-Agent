@@ -757,6 +757,8 @@ async function handleTypeChange(index, newType) {
     <textarea class="ed-h">${escapeHtml(h)}</textarea>`;
 
   div.querySelector('.type-changer').onchange = async function(e) {
+    alert("문항 유형 변경 감지됨: " + e.target.value);
+   
     var nt = e.target.value;
     var oldType = div.dataset.type || 'scale5';
 
