@@ -396,6 +396,7 @@
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
         <h3>추천 문항을 선택해 주세요</h3>
         <span id="selCount" style="font-size:12px; background:#ede9fe; color:#667eea; font-weight:700; padding:3px 10px; border-radius:20px;">0개 선택</span>
+        <span id="receivedCount" style="font-size:12px; background:#ecfeff; color:#0891b2; font-weight:700; padding:3px 10px; border-radius:20px;">0개 수신</span>
       </div>
 
       <div id="qList"></div>
@@ -481,7 +482,6 @@
   }
 
 async function handleTypeChange(index, newType) {
- alert("변경 감지됨: " + newType);
   const qTextEl = document.querySelectorAll('.q-text')[index];
   const typeSel = document.getElementById(`type-sel-${index}`);
 
@@ -507,14 +507,6 @@ async function handleTypeChange(index, newType) {
 
     // 화면 문항 변경
     qTextEl.innerText = newQuestion;
-
-    // ✅ 실제 최종 제출 데이터도 변경
-    if (data[index] && data[index].text) {
-      const parts = String(data[index].text).split("|");
-      parts[0] = newQuestion;
-      data[index].text = parts.join("|");
-      data[index].type = newType;
-    }
 
     typeSel.setAttribute('data-prev-type', newType);
 
@@ -558,6 +550,7 @@ async function handleTypeChange(index, newType) {
 
   document.getElementById('searchBtn').onclick = async function() {
     var payload = getInputPayload([]);
+    console.log('요청 payload:', payload);
 
     if (!payload.managerIdea && !payload.topic) {
       alert('최소한 설문 대주제 또는 기존 문항/아이디어를 입력해 주세요!');
@@ -576,6 +569,7 @@ async function handleTypeChange(index, newType) {
       stopLoading();
 
       const qs = result.data || [];
+      console.log('GAS에서 받은 문항 수:', qs.length, qs);
       if (qs.length > 0 && !String(qs[0]).includes("생성하지 못했습니다")) {
         rawQuestions = qs;
         allSeenQuestions = [...qs];
@@ -604,6 +598,7 @@ async function handleTypeChange(index, newType) {
       stopLoading();
 
       const qs = result.data || [];
+      console.log('추가로 받은 문항 수:', qs.length, qs);
       if (qs.length > 0) {
         rawQuestions = qs;
         allSeenQuestions = allSeenQuestions.concat(qs);
@@ -624,6 +619,8 @@ async function handleTypeChange(index, newType) {
   function renderSelectionPage() {
     var list = document.getElementById('qList');
     list.innerHTML = '';
+
+    var renderedCount = 0;
 
     rawQuestions.forEach(function(raw, i) {
       var parts = String(raw || '').split('|');
@@ -681,9 +678,14 @@ async function handleTypeChange(index, newType) {
       };
 
       list.appendChild(div);
+      renderedCount++;
     });
 
     document.getElementById('selCount').textContent = selectedQuestions.length + '개 선택';
+    var receivedCountEl = document.getElementById('receivedCount');
+    if (receivedCountEl) {
+      receivedCountEl.textContent = rawQuestions.length + '개 수신 / ' + renderedCount + '개 표시';
+    }
   }
 
   document.getElementById('goPreviewBtn').onclick = function() {
