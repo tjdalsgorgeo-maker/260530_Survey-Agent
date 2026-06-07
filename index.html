@@ -480,6 +480,37 @@
     return json;
   }
 
+async function handleTypeChange(index, newType) {
+  const qTextEl = document.querySelectorAll('.q-text')[index];
+  const typeSel = document.getElementById(`type-sel-${index}`);
+
+  if (!qTextEl || !typeSel) return;
+
+  const oldText = qTextEl.innerText.trim();
+  const oldType = typeSel.getAttribute('data-prev-type') || 'scale5';
+
+  if (oldType === newType) return;
+
+  qTextEl.innerText = '문항 유형에 맞게 질문을 수정하는 중...';
+
+  try {
+    const result = await callGas("rewriteQuestionByType", {
+      questionText: oldText,
+      fromType: oldType,
+      toType: newType,
+      surveyPurpose: document.getElementById('surveyPurpose').value.trim(),
+      responseTarget: document.getElementById('responseTarget').value.trim()
+    });
+
+    qTextEl.innerText = result.data || oldText;
+    typeSel.setAttribute('data-prev-type', newType);
+
+  } catch (err) {
+    qTextEl.innerText = oldText;
+    alert('문항 유형 변경 중 오류가 발생했습니다: ' + err.message);
+  }
+}
+
   function getInputPayload(excludeQuestions) {
     return {
       topic: document.getElementById('topic').value.trim(),
@@ -600,7 +631,10 @@
             <div class="q-checkbox">${isSelected ? '✓' : ''}</div>
             <div class="q-text">${escapeHtml(cleanQ)}</div>
           </div>
-          <select id="type-sel-${i}" style="padding:4px; font-size:12px; width:120px; margin-bottom:0;">
+          <select id="type-sel-${i}"
+                  data-prev-type="${chosenType}"
+                  style="padding:4px; font-size:12px; width:120px; margin-bottom:0;"
+                  onchange="handleTypeChange(${i}, this.value)">
             <option value="scale5" ${chosenType === 'scale5' ? 'selected' : ''}>5점척도</option>
             <option value="scale7" ${chosenType === 'scale7' ? 'selected' : ''}>7점척도</option>
             <option value="short" ${chosenType === 'short' ? 'selected' : ''}>단답형</option>
