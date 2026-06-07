@@ -757,6 +757,7 @@ async function handleTypeChange(index, newType) {
     <textarea class="ed-h">${escapeHtml(h)}</textarea>`;
 
   div.querySelector('.type-changer').onchange = async function(e) {
+
   var nt = e.target.value;
   var oldType = div.dataset.type || 'scale5';
 
@@ -772,11 +773,6 @@ async function handleTypeChange(index, newType) {
   questionInput.value = '문항 유형에 맞게 질문을 수정하는 중...';
 
   try {
-    console.log("문항 재작성 요청:", {
-      questionText: originalQuestion,
-      fromType: oldType,
-      toType: nt
-    });
 
     const result = await callGas("rewriteQuestionByType", {
       questionText: originalQuestion,
@@ -786,13 +782,11 @@ async function handleTypeChange(index, newType) {
       responseTarget: document.getElementById('responseTarget').value.trim()
     });
 
-    console.log("문항 재작성 응답:", result);
-
     questionInput.value = result.data || originalQuestion;
     div.dataset.type = nt;
 
   } catch (err) {
-    console.error("문항 유형 변경 오류:", err);
+    console.error(err);
     questionInput.value = originalQuestion;
     alert('문항 유형 변경 중 오류가 발생했습니다: ' + err.message);
   }
