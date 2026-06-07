@@ -643,10 +643,11 @@ async function handleTypeChange(index, newType) {
             <div class="q-checkbox">${isSelected ? '✓' : ''}</div>
             <div class="q-text">${escapeHtml(cleanQ)}</div>
           </div>
-          <select id="type-sel-${i}"
+          <select id="type-sel-${i}" 
                   data-prev-type="${chosenType}"
                   style="padding:4px; font-size:12px; width:120px; margin-bottom:0;"
-                  onchange="handleTypeChange(${i}, this.value)">
+                  onclick="event.stopPropagation();"
+                  onchange="event.stopPropagation(); handleTypeChange(${i}, this.value)">
             <option value="scale5" ${chosenType === 'scale5' ? 'selected' : ''}>5점척도</option>
             <option value="scale7" ${chosenType === 'scale7' ? 'selected' : ''}>7점척도</option>
             <option value="short" ${chosenType === 'short' ? 'selected' : ''}>단답형</option>
