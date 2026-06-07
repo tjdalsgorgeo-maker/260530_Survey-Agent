@@ -502,7 +502,19 @@ async function handleTypeChange(index, newType) {
       responseTarget: document.getElementById('responseTarget').value.trim()
     });
 
-    qTextEl.innerText = result.data || oldText;
+    const newQuestion = result.data || oldText;
+
+    // 화면 문항 변경
+    qTextEl.innerText = newQuestion;
+
+    // ✅ 실제 최종 제출 데이터도 변경
+    if (data[index] && data[index].text) {
+      const parts = String(data[index].text).split("|");
+      parts[0] = newQuestion;
+      data[index].text = parts.join("|");
+      data[index].type = newType;
+    }
+
     typeSel.setAttribute('data-prev-type', newType);
 
   } catch (err) {
