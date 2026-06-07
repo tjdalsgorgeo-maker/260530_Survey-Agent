@@ -481,6 +481,7 @@
   }
 
 async function handleTypeChange(index, newType) {
+ alert("변경 감지됨: " + newType);
   const qTextEl = document.querySelectorAll('.q-text')[index];
   const typeSel = document.getElementById(`type-sel-${index}`);
 
