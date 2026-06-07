@@ -720,57 +720,85 @@ async function handleTypeChange(index, newType) {
   }
 
   function addPreviewCard(q, l, r, h, type) {
-    var div = document.createElement('div');
-    div.className = 'preview-card';
-    div.dataset.type = type;
+  var div = document.createElement('div');
+  div.className = 'preview-card';
+  div.dataset.type = type;
 
-    div.innerHTML = `
-      <div class="preview-card-header">
-        <span class="q-number-title">질문 <span class="n-val"></span></span>
-        <div class="header-actions">
-          <button class="btn-delete" type="button" onclick="this.closest('.preview-card').remove(); refreshNumbers();">문항 삭제</button>
-          <span class="drag-handle">☰ 순서 이동</span>
-        </div>
+  div.innerHTML = `
+    <div class="preview-card-header">
+      <span class="q-number-title">질문 <span class="n-val"></span></span>
+      <div class="header-actions">
+        <button class="btn-delete" type="button" onclick="this.closest('.preview-card').remove(); refreshNumbers();">문항 삭제</button>
+        <span class="drag-handle">☰ 순서 이동</span>
       </div>
+    </div>
 
-      <span class="preview-label">문항 유형</span>
-      <select class="type-changer">
-        <option value="scale5" ${type === 'scale5' ? 'selected' : ''}>5점 척도</option>
-        <option value="scale7" ${type === 'scale7' ? 'selected' : ''}>7점 척도</option>
-        <option value="short" ${type === 'short' ? 'selected' : ''}>단답형</option>
-        <option value="paragraph" ${type === 'paragraph' ? 'selected' : ''}>장문형</option>
-        <option value="multiple" ${type === 'multiple' ? 'selected' : ''}>객관식</option>
-      </select>
+    <span class="preview-label">문항 유형</span>
+    <select class="type-changer">
+      <option value="scale5" ${type === 'scale5' ? 'selected' : ''}>5점 척도</option>
+      <option value="scale7" ${type === 'scale7' ? 'selected' : ''}>7점 척도</option>
+      <option value="short" ${type === 'short' ? 'selected' : ''}>단답형</option>
+      <option value="paragraph" ${type === 'paragraph' ? 'selected' : ''}>장문형</option>
+      <option value="multiple" ${type === 'multiple' ? 'selected' : ''}>객관식</option>
+    </select>
 
-      <span class="preview-label">질문 텍스트</span>
-      <input type="text" class="ed-q" value="${escapeHtml(q)}">
+    <span class="preview-label">질문 텍스트</span>
+    <input type="text" class="ed-q" value="${escapeHtml(q)}">
 
-      <div class="scale-box ${String(type || '').startsWith('scale') ? '' : 'hidden'}">
-        <span class="preview-label">양 끝 레이블</span>
-        <div style="display:flex; gap:10px;">
-          <input type="text" class="ed-l" value="${escapeHtml(l)}">
-          <input type="text" class="ed-r" value="${escapeHtml(r)}">
-        </div>
+    <div class="scale-box ${String(type || '').startsWith('scale') ? '' : 'hidden'}">
+      <span class="preview-label">양 끝 레이블</span>
+      <div style="display:flex; gap:10px;">
+        <input type="text" class="ed-l" value="${escapeHtml(l)}">
+        <input type="text" class="ed-r" value="${escapeHtml(r)}">
       </div>
+    </div>
 
-      <span class="preview-label">설명 가이드라인</span>
-      <textarea class="ed-h">${escapeHtml(h)}</textarea>`;
+    <span class="preview-label">설명 가이드라인</span>
+    <textarea class="ed-h">${escapeHtml(h)}</textarea>`;
 
-    div.querySelector('.type-changer').onchange = function(e) {
-      var nt = e.target.value;
+  div.querySelector('.type-changer').onchange = async function(e) {
+    var nt = e.target.value;
+    var oldType = div.dataset.type || 'scale5';
+
+    var questionInput = div.querySelector('.ed-q');
+    var oldQuestion = questionInput.value.trim();
+
+    div.dataset.type = nt;
+    div.querySelector('.scale-box').classList.toggle('hidden', !nt.startsWith('scale'));
+
+    if (!oldQuestion || oldType === nt) return;
+
+    var originalQuestion = oldQuestion;
+    questionInput.value = '문항 유형에 맞게 질문을 수정하는 중...';
+
+    try {
+      const result = await callGas("rewriteQuestionByType", {
+        questionText: originalQuestion,
+        fromType: oldType,
+        toType: nt,
+        surveyPurpose: document.getElementById('surveyPurpose').value.trim(),
+        responseTarget: document.getElementById('responseTarget').value.trim()
+      });
+
+      questionInput.value = result.data || originalQuestion;
       div.dataset.type = nt;
-      div.querySelector('.scale-box').classList.toggle('hidden', !nt.startsWith('scale'));
-    };
 
-    var handle = div.querySelector('.drag-handle');
-    handle.onmouseenter = () => div.draggable = true;
-    handle.onmouseleave = () => {
-      if (!div.classList.contains('dragging')) div.draggable = false;
-    };
+    } catch (err) {
+      console.error(err);
+      questionInput.value = originalQuestion;
+      alert('문항 유형 변경 중 오류가 발생했습니다: ' + err.message);
+    }
+  };
 
-    document.getElementById('previewList').appendChild(div);
-  }
+  var handle = div.querySelector('.drag-handle');
+  handle.onmouseenter = () => div.draggable = true;
+  handle.onmouseleave = () => {
+    if (!div.classList.contains('dragging')) div.draggable = false;
+  };
 
+  document.getElementById('previewList').appendChild(div);
+}
+ 
   document.getElementById('downloadExcelBtn').onclick = function() {
     var data = [];
     var cards = document.querySelectorAll('.preview-card');
